@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Test Document for Image Zoom</title>
+        <link rel="stylesheet" href="../css/imagezoom.css" type="text/css"/>
+    </head>
+    <body>
+        <div>
+            <h2>Simple Same Source</h2>
+            <a class="zoomable">
+                <img src="imgs/bishop-small.jpg" alt="Thumbnail"></img>
+            </a>
+        </div>
+        <div>
+            <h2>Different Source</h2>
+            <a class="zoomable">
+                <img src="imgs/bishop-small.jpg" data-zoom="imgs/bishop-big.jpg" alt="Thumbnail"></img>
+            </a>
+        </div>
+        <script src="../js/imagezoom.js"></script>
+    </body>
+</html>
