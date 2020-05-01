@@ -11,19 +11,42 @@
   display: none;
 }
 #facsViewerContainer.open {
-  display: flex;
-  background: black;
+  display: block;
+  background: rgba(0, 0, 0, 0.6);
   color: white;
   margin: auto;
-  max-width: 100vw;
-  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   position: fixed;
   padding-right: 2rem;
   align-self: center;
+  top: 0;
+  left: 0;
+}
+#facsViewerContainer.open .facsViewerContent {
   z-index: 9000;
   top: 50%;
+  position: relative;
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+#facsViewerContainer.open .facsViewerContent .content {
+  height: 100%;
+  width: 80%;
+  display: flex;
+  align-items: center;
+}
+#facsViewerContainer.open .facsViewerContent .tools {
+  padding: 0 2rem;
+}
+#facsViewerContainer.open .facsViewerContent canvas {
+  background: black;
 }
 #facsViewerContainer.open #facs_closer {
   font-size: 4rem;

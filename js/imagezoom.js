@@ -7,50 +7,159 @@
  */
  
  const body = document.getElementsByTagName('body')[0];
+ let aspect = 3/4;
+ let fvc = document.getElementById('facsViewerContainer');
+ let fvinner = fvc.querySelectorAll('.facsViewerContent')[0];
+ const zoomables = document.querySelectorAll('a.zoomable');
+ const zoomArr = Array.from(zoomables);
+ let tools, list, closer, nextBtn, prevBtn;
+ console.log(zoomables);
+    
  
- document.querySelectorAll('a.zoomable').forEach(function(i){
-        i.addEventListener('click',function(e){
+ 
+ zoomables.forEach(function(z){
+        z.addEventListener('click',function(e){
             e.preventDefault();
-            drawFacs(i);
+            setup(z);
         });
     });
     
-if (!document.getElementById('facsViewerContainer')){
-   var facsContainer = document.createElement('div')
-   var facsCloser = document.createElement('span');
-   var canvas = document.createElement('canvas');
-   body.appendChild(facsContainer);
-   facsContainer.setAttribute('id', 'facsViewerContainer');
-   facsContainer.appendChild(facsCloser);
-   facsCloser.setAttribute('id','facs_closer');
-   facsContainer.appendChild(canvas);
-   canvas.setAttribute('id','viewer');
-   facsCloser.innerHTML += "&times;";
-   facsCloser.addEventListener('click', closeViewer);
-} 
+/* Now create the canvas */
 
-if (!document.getElementById('header_overlay')){
+let canEl = document.createElement('canvas');
+fvinner.querySelectorAll('.content')[0].appendChild(canEl);
+createTools();
+    
+    
+    
+function createOverlay(){
+ if (!document.getElementById('header_overlay')){
     var overlay = document.createElement('div');
     body.appendChild(overlay);
     overlay.setAttribute('id','overlay');
     overlay.addEventListener('click',closeViewer);
-};
-    
+ };
+}
+
+function createTools(){
+
+    tools = fvc.querySelectorAll('.tools')[0];
+    list = document.createElement('ul');
+    closer = document.createElement('a');
+    closer.innerHTML='&times;';
+    if (zoomables. length > 1){
+        nextBtn = document.createElement('button');
+        nextBtn.setAttribute('class', 'next');
+        nextBtn.innerHTML = 'Next';
+        prevBtn = document.createElement('button');
+        prevBtn.setAttribute('class','prev');
+        prevBtn.innerHTML = 'Prev';
+    }
+    var toolItems = [closer, prevBtn, nextBtn];
+    toolItems.forEach(function(item){
+        if (item !== null){
+            let li = document.createElement('li');
+            tools.appendChild(li);
+            li.appendChild(item);
+        }
+    });
+    closer.addEventListener('click',closeViewer, true);
+}
+
+
+
 function closeViewer(){
         body.classList.remove('viewer-open');
-        var fcv = document.getElementById('facsViewerContainer');
-        fcv.classList.remove('open');
-        fcv.classList.remove('loaded');
+        fvc.classList.remove('open');
+        fvc.classList.remove('loaded');
         if (window.stop !== undefined){
             window.stop();
          }
         else if (document.execCommand !== undefined){
                 document.execCommand("Stop", false);
-        } 
+        }
+        
+        if (prevBtn){
+                refresh(prevBtn);
+        }
+        if (nextBtn){
+                refresh(nextBtn);  
+        }
+        
+  
 }
+
+
+function refresh(el){
+    elClone = el.cloneNode(true);
+    el.parentNode.replaceChild(elClone, el);
+}
+
+ 
  
 
-function drawFacs(link){
+function setup(z){
+    let img = z.querySelectorAll('img')[0];
+    let canvas = fvc.querySelectorAll('canvas')[0];
+
+    console.log(canvas);
+    console.log('Drawing');
+    let index = zoomArr.indexOf(z);
+    let facs = new Image;
+    
+    prevBtn = fvc.querySelectorAll('button.prev')[0];
+    nextBtn = fvc.querySelectorAll('button.next')[0];
+    facs.onload = function(){
+        console.log('LOADED');
+        console.log(facs.naturalWidth);
+        console.log(facs.naturalHeight);
+        var naturalAspect = facs.naturalWidth / facs.naturalHeight;
+        console.log('Natural aspect: ' + naturalAspect);
+        fvc.classList.add('open');
+        let toolsWidth = tools.offsetWidth;
+        let windowWidth = window.innerWidth;
+        let windowHeight = window.innerHeight;
+        let fvHeight = canvas.parentNode.offsetHeight;
+        let fvWidth = canvas.parentNode.offsetWidth;
+        let canHeight = fvWidth * naturalAspect;
+        let canWidth = fvWidth;
+        canvas.width = canWidth;
+        canvas.height = canHeight;
+            refresh(canvas);
+        draw(facs)
+        if (zoomArr.length > 0){
+            if (index > 0){
+                prevBtn.removeAttribute('disabled');
+                prevBtn.addEventListener('click', function prev(){
+                setup(zoomArr[index-1]);
+                prevBtn.removeEventListener('click', prev, true);
+             }, true);
+            } else {
+                prevBtn.disabled='disabled';
+            }
+            if (index < zoomArr.length - 1){
+                nextBtn.removeAttribute('disabled');
+                nextBtn.addEventListener('click', function next(){
+                     setup(zoomArr[index +1 ]);
+                     nextBtn.removeEventListener('click', next, true);
+                }, true);
+            } else {
+                nextBtn.disabled='disabled';
+            }  
+            
+        } 
+    } 
+    facs.onerror = function(){
+        //ERROR MESSAGE
+    }
+    
+    facs.src = (img.getAttribute('data-zoom')) ? img.getAttribute('data-zoom') : img.getAttribute('src');
+
+    let ctx = canvas.getContext("2D");
+    /*
+    
+
+
     var imgDiv = link.querySelectorAll('img')[0];
     console.log('Drawing');
     var facs = new Image;
@@ -62,30 +171,41 @@ function drawFacs(link){
     var canvas = document.getElementsByTagName('canvas')[0];
     var innerWidth = (window.innerWidth);
     var facsScale = 0.75;
-    canvas.width = innerWidth < 800 ? innerWidth * facsScale : 800;
-    canvas.height = innerWidth < 800 ? innerWidth * facsScale * 0.75 : 600;
-    refreshCanvas(canvas);
+    
+    /\* Give a 6% margin of top and bottom *\/
+    let windowHeight = window.innerHeight;
+    let canvasHeight = windowHeight - (windowHeight *.12);
+    let canvasWidth;
+    if (canvasHeight / aspect > window.innerWidth){
+        canvasWidth = window.innerWidth - (window.innerWidth * .12);
+        canvasHeight = canvasWidth * aspect;
+    } else {
+        canvasWidth = canvasHeight / aspect;
+    }
+    
+    console.log(canvasHeight);
+    canvas.height = canvasHeight;
+    canvas.width = canvasWidth;
+    refresh(canvas);
     var ctx = canvas.getContext("2d");
     var facsCtr = document.getElementById('facsViewerContainer');
     body.classList.add('viewer-open');
     facsCtr.classList.add('open');
-    /* Add a little loading boilerplate... */
+    /\* Add a little loading boilerplate... *\/
     
-    /* Once the facs loads, then draw the facsimile */
+    /\* Once the facs loads, then draw the facsimile *\/
     facs.onload = function(){
        facsCtr.classList.add('loaded');
-       drawFacsimile(imgDiv, this);
+    
     }
     facs.onerror = function(){
         drawErrorMessage();
     }
     facs.src = imgSrc
-    ctx.zoomLevel = 1;
+    ;*/
 }
 
 function drawErrorMessage(){
-    var canvas = document.getElementsByTagName('canvas')[0];
-    var ctx = canvas.getContext("2d");
         ctx.clearRect(0,0,canvas.width,canvas.height);
 	    ctx.restore();
         ctx.font = '20px serif';
@@ -94,17 +214,12 @@ function drawErrorMessage(){
         console.log(ctx);
 }
 
-function refreshCanvas(canvas){
-    var newCanvas = canvas.cloneNode(true);
-    canvas.parentNode.replaceChild(newCanvas, canvas);
-}
 
 
 
-function drawFacsimile(imgDiv, facs){
-   /* Get the canvas */
-    var viewer = document.getElementById('facsViewerContainer');
-    var canvas = viewer.getElementsByTagName('canvas')[0];
+
+function draw(facs){
+    let canvas = fvc.querySelectorAll('canvas')[0];
 	var ctx = canvas.getContext('2d');
     trackTransforms(ctx);
 	function redraw(){
